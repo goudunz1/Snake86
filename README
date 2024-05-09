@@ -1,0 +1,7 @@
+Snake86 is a tiny snake game in ~200 lines of MASM 8086 assembly.
+
+A DOS system (if you really have one) or a simulator like DOS-Box is needed to
+run the program. MASM toolchain is needed to compile the source. When you are
+ready, simply run build.bat.
+
+test platform: DOS-Box 0.74
