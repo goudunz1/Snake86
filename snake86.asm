@@ -40,12 +40,12 @@ draw_block:
   add ax,0a000h
   mov es,ax
   mov cx,4
-  DRAW_BLOCK_LOOP:
+  draw_block@loop0:
     mov es:[bx],dx
     mov es:[bx+2],dx
     ; rendering rows first
     add bx,320
-    loop DRAW_BLOCK_LOOP
+    loop draw_block@loop0
   pop bx
   ret
 ; double counter clock to consume some processor time
@@ -53,19 +53,19 @@ draw_block:
 delay:
   mov cx,1
   xor ax,ax
-  DELAY_LOOP:
+  delay@loop0:
     sub ax,1
     test ax,ax
-    jnz DELAY_LOOP
-    loop DELAY_LOOP
+    jnz delay@loop0
+    loop delay@loop0
   ret
 ; buffer user input, need to discard verbose keys
 get_key:
   mov ah,1
   int 16h
-  jnz GET_KEY_LOOP
+  jnz get_key@loop0
   ret
-  GET_KEY_LOOP:
+  get_key@loop0:
     mov ds:key,al
     xor ah,ah
     int 16h
@@ -77,23 +77,23 @@ set_dir:
   mov bx,ds:head
   mov ah,1
   cmp al,'d'
-  jz _set_dir
+  jz set_dir@br0
   neg ah
   cmp al,'a'
-  jz _set_dir
+  jz set_dir@br0
   mov ah,80
   cmp al,'s'
-  jz _set_dir
+  jz set_dir@br0
   neg ah
   cmp al,'w'
-  jnz SET_DIR_RET
-  _set_dir:
+  jnz set_dir@br1
+  set_dir@br0:
     mov al,byte ptr ds:buf[bx]
     add al,ah
-    jz SET_DIR_RET
+    jz set_dir@br1
     ; no turning around!
     mov byte ptr ds:buf[bx],ah
-  SET_DIR_RET:
+  set_dir@br1:
     ret
 ; srand(time)
 srand:
@@ -125,14 +125,13 @@ gen_food:
   mov bx,160
   mov cx,ax
   ; bx offset, cx index of free space
-  GEN_FOOD_LOOP:
+  ; skip occupied block and stop when cx is zero
+  gen_food@loop0:
     add bx,2
     mov al,byte ptr ds:buf[bx]
     test al,al
-    jnz GEN_FOOD_LOOP
-    loop GEN_FOOD_LOOP
-    ; skip occupied block and stop when cx is zero
-  GEN_FOOD_RET:
+    jnz gen_food@loop0
+    loop gen_food@loop0
     mov ax,0400h
     mov ds:buf[bx],ax
     call draw_block
@@ -149,7 +148,7 @@ snake_move:
   ; ax 2*direction (signed!), bx offset
   mov dx,ds:buf[bx]
   test dl,dl
-  jnz SNAKE_MOVE_RET
+  jnz snake_move@br1
   ; blocked! gameover now ...
   mov ds:head,bx
   sar ax,1
@@ -157,7 +156,7 @@ snake_move:
   mov ds:buf[bx],ax
   ; HIBYTE 02 (green), LOBYTE direction
   cmp dh,4
-  jnz _snake_move
+  jnz snake_move@br0
   ; update head only when eating food
   call draw_block
   mov dx,ds:len
@@ -165,8 +164,8 @@ snake_move:
   mov ds:len,dx ; increment lenth by 1
   call gen_food
   xor ax,ax
-  jmp SNAKE_MOVE_RET
-  _snake_move:
+  jmp snake_move@br1
+  snake_move@br0:
     call draw_block
     mov bx,ds:tail
     xor ax,ax
@@ -181,7 +180,7 @@ snake_move:
     mov ds:tail,dx
     xor ax,ax
     mov ds:buf[bx],ax
-  SNAKE_MOVE_RET:
+  snake_move@br1:
     ret
 start:
   mov ax,data
@@ -192,15 +191,15 @@ start:
   mov ax,13h
   int 10h ; graphic mode
   xor bx,bx
-  initloop:
+  start@loop0:
     mov ax,ds:buf[bx]
     call draw_block
     add bx,2
     cmp bx,50*80*2
-    jb initloop
+    jb start@loop0
   call srand
   call gen_food
-  mainloop:
+  start@loop1:
     call delay
     call get_key
     ; 'q' quit the game
@@ -210,13 +209,13 @@ start:
     call set_dir
     call snake_move
     test ax,ax
-    jz mainloop
-  exit:
-    xor ax,ax
-    int 16h ; any key to continue
-    mov ax,03h
-    int 10h ; quit graphic mode
-    mov ax,4c00h
-    int 21h
+    jz start@loop1
+exit:
+  xor ax,ax
+  int 16h ; any key to continue
+  mov ax,03h
+  int 10h ; quit graphic mode
+  mov ax,4c00h
+  int 21h
 code ends
 end start

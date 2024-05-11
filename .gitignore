@@ -1,3 +1,15 @@
 BUILD/
+DIST/
 *.OBJ
+*.CRF
+*.LST
 *.EXE
+*.MAP
+
+build/
+dist/
+*.obj
+*.crf
+*.lst
+*.exe
+*.map
