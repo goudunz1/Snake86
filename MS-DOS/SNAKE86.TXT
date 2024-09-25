@@ -40,5 +40,5 @@ performance and shrink the size of its source code.
 Have fun if you find it interesting or useful. It feels bad to mess with all
 the calling conventions, though.
 
-last updated on Jan 18, 2024
+last updated on Sep 24, 2024
   by goudunz1
